@@ -68,3 +68,4 @@ trait Parsers[ParseError,Parser[+_]] { self =>
       equal(p, p map (a => a))(in)
   }
 }
+
