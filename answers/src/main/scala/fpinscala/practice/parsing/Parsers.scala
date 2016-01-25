@@ -1,4 +1,4 @@
-package fpinscala.practice
+package fpinscala.practice.parsing
 
 import fpinscala.testing._
 import scala.util.matching.Regex
@@ -68,4 +68,3 @@ trait Parsers[ParseError,Parser[+_]] { self =>
       equal(p, p map (a => a))(in)
   }
 }
-
