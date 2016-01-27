@@ -1,6 +1,7 @@
 package fpinscala.practice.Monads
 
 import scala.language.higherKinds
+import fpinscala.testing._
 
 
 trait Functor[F[_]] {
@@ -13,6 +14,56 @@ object Functor {
   val listFunctor = new Functor[List] {
     def map[A,B](as: List[A])(f: A => B): List[B] =
       as.map(f)
+  }
+}
+
+trait Monad[F[_]] extends Functor[F] {
+
+  def flatMap[A,B](ma: F[A])(f: A => F[B]): F[B]
+  def unit[A](a: => A): F[A]
+
+  // Default functor implementation
+  def map[A,B](a: F[A])(f: A => B): F[B] =
+    flatMap(a)(a => unit(f(a)))
+  def map2[A,B,C](a: F[A], b: F[B])(f: (A,B) => C): F[C] =
+    flatMap(a)(x => map(b)(y => f(x,y)))
+
+  // Combinators
+  def sequence[A](lma: List[F[A]]): F[List[A]] =
+    lma.foldRight(unit(Nil): F[List[A]])((ma, acc) =>
+      flatMap(ma)(a => map(acc)(as => a :: as)))
+  def traverse[A,B](lma: List[F[A]])(f: A => F[B]): F[List[B]] =
+    sequence(lma map { ma => flatMap(ma)(f) })
+  def replicateM[A](n: Int, ma: F[A]): F[List[A]] =
+    sequence(List.fill(n)(ma))
+  def product[A,B](ma: F[A], mb: F[B]): F[(A,B)] =
+    map2(ma,mb)((_,_))
+  def filterM[A](ms: List[A])(f: A => F[Boolean]): F[List[A]] =
+    map(sequence(ms.map(a => map(f(a))((_,a)))))(_.flatMap{ case(b,x) =>
+      if (b) List(x) else Nil
+    })
+  def compose[A,B,C](f: A => F[B], g: B => F[C]): A => F[C] =
+    a => flatMap(f(a))(b => g(b))
+}
+
+object Monad {
+
+  val listMonad = new Monad[List] {
+    def flatMap[A,B](as: List[A])(f: A => List[B]): List[B] =
+      as.flatMap(f)
+    def unit[A](a: => A): List[A] = List(a)
+  }
+
+  val genMonad = new Monad[Gen] {
+    def flatMap[A,B](a: Gen[A])(f: A => Gen[B]): Gen[B] =
+      a flatMap f
+    def unit[A](a: => A): Gen[A] = Gen.unit(a)
+  }
+
+  val optionMonad = new Monad[Option] {
+    def flatMap[A,B](a: Option[A])(f: A => Option[B]): Option[B] =
+      a flatMap f
+    def unit[A](a: => A): Option[A] = Some(a)
   }
 }
 
