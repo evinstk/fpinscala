@@ -12,7 +12,7 @@ trait Applicative[F[_]] extends Functor[F] {
 
   // Derived combinators
   def map2[A,B,C](fa: F[A], fb: F[B])(f: (A,B) => C): F[C] =
-    apply(apply(unit[A => B => C](a => b => f(a,b)))(fa))(fb)
+    apply[B,C](apply[A,B => C](unit(a => f.curried(a)))(fa))(fb)
 
   def map[A,B](fa: F[A])(f: A => B): F[B] =
     apply[A,B](unit(f))(fa)
