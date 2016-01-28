@@ -12,7 +12,7 @@ case class Reader[R, A](run: R => A) {
 
 object Reader {
   def readerMonad[R] = new Monad[({type f[x] = Reader[R,x]})#f] {
-    def flatMap[A,B](ra: Reader[R,A])(f: A => Reader[R,B]): Reader[R,B] =
+    override def flatMap[A,B](ra: Reader[R,A])(f: A => Reader[R,B]): Reader[R,B] =
       Reader(r => f(ra.run(r)).run(r))
     def unit[A](a: => A): Reader[R,A] = Reader(_ => a)
   }
