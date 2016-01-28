@@ -1,7 +1,8 @@
-package fpinscala.practice.Monads
+package fpinscala.practice.monads
 
 import scala.language.higherKinds
 import fpinscala.testing._
+import fpinscala.state._
 
 
 trait Functor[F[_]] {
@@ -65,5 +66,22 @@ object Monad {
       a flatMap f
     def unit[A](a: => A): Option[A] = Some(a)
   }
+
+  def stateMonad[S] = new Monad[({type f[x] = State[S,x]})#f] {
+    def unit[A](a: => A): State[S,A] = State(s => (a,s))
+    def flatMap[A,B](ma: State[S,A])(f: A => State[S,B]): State[S,B] =
+      ma.flatMap(f)
+  }
+}
+
+case class Id[A](value: A) {
+
+  val idMonad = new Monad[Id] {
+    def flatMap[A,B](a: Id[A])(f: A => Id[B]): Id[B] = f(a.value)
+    def unit[A](a: => A): Id[A] = Id(a)
+  }
+
+  def flatMap[B](f: A => Id[B]): Id[B] = idMonad.flatMap(this)(f)
+  def map[B](f: A => B): Id[B] = idMonad.map(this)(f)
 }
 
